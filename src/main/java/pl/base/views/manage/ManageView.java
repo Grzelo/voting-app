@@ -1,5 +1,6 @@
 package pl.base.views.manage;
 
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -48,7 +49,7 @@ public class ManageView extends HorizontalLayout {
         H3 votersH3 = new H3("Voters");
         votersH3.getStyle().set("margin", "0 auto 0 0");
         HorizontalLayout header = new HorizontalLayout(votersH3,
-                createEntityButton("Add Voter", new Voter()));
+                createEntityButton("Add Voter", Voter.class));
         header.setAlignItems(Alignment.CENTER);
         header.getThemeList().clear();
 
@@ -77,7 +78,7 @@ public class ManageView extends HorizontalLayout {
         H3 candidatesH3 = new H3("Candidates");
         candidatesH3.getStyle().set("margin", "0 auto 0 0");
         HorizontalLayout candidatesHeader = new HorizontalLayout(candidatesH3,
-                createEntityButton("Add Candidate", new Candidate()));
+                createEntityButton("Add Candidate", Candidate.class));
 
         candidatesHeader.setAlignItems(Alignment.CENTER);
         candidatesHeader.getThemeList().clear();
@@ -100,24 +101,34 @@ public class ManageView extends HorizontalLayout {
      * @param <T>         a subclass of VotingEntity
      * @return the created Button
      */
-    private <T extends VotingEntity> Button createEntityButton(String buttonLabel, T entity) {
+    private <T extends VotingEntity> Button createEntityButton(String buttonLabel, Class<T> entity) {
         Button button = new Button(buttonLabel, VaadinIcon.PLUS_CIRCLE.create());
         button.addClickListener(clickEvent -> {
-            String dialogHeader = entity instanceof Voter ? "New Voter" : "New Candidate";
+            VotingEntity votingEntity = entity == Voter.class ? new Voter() : new Candidate();
+            String dialogHeader = votingEntity instanceof Voter ? "New Voter" : "New Candidate";
             Dialog dialog = new Dialog(dialogHeader);
-            TextField newCandidateName = new TextField("Name");
-            var horizontalLayout = new HorizontalLayout(newCandidateName, new Button("Save", saveEvent -> {
-                entity.setName(newCandidateName.getValue());
-                if (entity instanceof Voter) {
-                    votingService.addVoter((Voter) entity);
-                    votersGrid.setItems(votingService.getAllVoters());
-                } else {
-                    votingService.addCandidate((Candidate) entity);
-                    candidatesGrid.setItems(votingService.getAllCandidates());
+            TextField newEntityName = new TextField("Name");
+            newEntityName.focus();
+            newEntityName.setRequired(true);
+            var saveButton = new Button("Save", saveEvent -> {
+                if (!newEntityName.getValue().isEmpty()) {
+                    votingEntity.setName(newEntityName.getValue());
+                    if (votingEntity instanceof Voter) {
+                        votingService.addVoter((Voter) votingEntity);
+                        votersGrid.setItems(votingService.getAllVoters());
+                    } else {
+                        votingService.addCandidate((Candidate) votingEntity);
+                        candidatesGrid.setItems(votingService.getAllCandidates());
 
+                    }
+                    dialog.close();
+                } else {
+                    newEntityName.setErrorMessage("Fill name");
+                    newEntityName.setInvalid(true);
                 }
-                dialog.close();
-            }));
+            });
+            saveButton.addClickShortcut(Key.ENTER);
+            var horizontalLayout = new HorizontalLayout(newEntityName, saveButton);
             horizontalLayout.setDefaultVerticalComponentAlignment(Alignment.BASELINE);
             dialog.add(horizontalLayout);
             dialog.open();

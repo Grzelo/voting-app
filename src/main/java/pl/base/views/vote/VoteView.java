@@ -31,10 +31,10 @@ public class VoteView extends HorizontalLayout {
         voterSelect = new Select<>();
         candidateSelect = new Select<>();
 
-        voterSelect.setLabel("Voters");
+        voterSelect.setPlaceholder("I'm");
         voterSelect.setItems(votingService.getVotersWhoNotVoted());
 
-        candidateSelect.setLabel("Candidates");
+        candidateSelect.setPlaceholder("I vote for");
         candidateSelect.setItems(votingService.getAllCandidates());
 
         Button voteButton = new Button("Vote!");
